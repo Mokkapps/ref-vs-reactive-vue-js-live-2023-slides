@@ -1,0 +1,19 @@
+{
+  "name": "ref-vs-reactive-vue-js-live-2023-slides",
+  "private": true,
+  "scripts": {
+    "build": "slidev build",
+    "dev": "slidev --open",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.40.6",
+    "@slidev/theme-default": "*",
+    "@slidev/theme-seriph": "*",
+    "slidev-theme-mokkapps": "^1.2.0"
+  },
+  "devDependencies": {
+    "@iconify-json/logos": "^1.1.24",
+    "@iconify-json/twemoji": "^1.1.11"
+  }
+}
