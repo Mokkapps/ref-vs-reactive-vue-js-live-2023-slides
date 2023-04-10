@@ -97,7 +97,7 @@ console.log(total) // ⚠️ total is still 20
 
 <span><twemoji-warning /> But JavaScript usually doesn't work like this.</span>
 
-<span><twemoji-technologist /> The Vue framework had to implement another mechanism to track the reading and writing of local variables.</span>
+<span><twemoji-technologist /> The Vue framework had to implement a mechanism to track the reading and writing of local variables.</span>
 
 </v-clicks>
 
@@ -109,7 +109,7 @@ It works by intercepting the reading and writing of object properties
 
 <v-clicks>
 
-**Vue 2** used getters/setters exclusively due to browser limitations
+**Vue 2** used object getters/setters exclusively due to browser limitations
 
 **Vue 3** uses [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) for reactive objects and getters/setters for refs
 
@@ -169,7 +169,7 @@ const state = reactive({ count: 0 })
 
 This state is **deeply reactive by default**:
 
-```js {3-6|8|9|11,12,14|8,11-14} {maxHeight:'200px'}
+```js {3,6|4|5|8|9|11,12,14|8,11-14} {maxHeight:'200px'}
 import { reactive, watch } from 'vue'
 
 const state = reactive({
@@ -235,7 +235,7 @@ Reactivity is lost if you destructure a reactive object's property into a local 
 
 ```js {1-3|5-6|8|all}
 const state = reactive({
-    count: 0,
+  count: 0,
 })
 
 // ⚠️ count is now a local variable disconnected from state.count
@@ -270,7 +270,7 @@ const { count } = toRefs(state)
 Reactivity is lost if you try to reassign a reactive value:
 
 ```js {1-3|5|5-6|8-10|11|12}
-const state = reactive({
+let state = reactive({
   count: 0,
 })
 
@@ -290,7 +290,7 @@ state = reactive({
 
 Reactivity connection is also lost if you pass a property into a function:
 
-```js {1-3|10|5,8|5-7}
+```js {1-3|9|5,7|5-7}
 const state = reactive({
   count: 0,
 })
@@ -371,9 +371,11 @@ image: ./ref.png
 
 ref() addresses the limitations of reactive()
 
+<v-clicks>
+
 `ref()` is not limited to object types but can hold any value type:
 
-```js {1|3|4}
+```js {1|3|4|all}
 import { ref } from 'vue'
 
 const count = ref(0)
@@ -382,7 +384,7 @@ const state = ref({ count: 0 })
 
 To read & write the reactive variable created with `ref()`, you need to access it with the `.value` property:
 
-```js {0|1-2|4|4-5|7|7-8|10|10-11} {'maxHeight': '130px'}
+```js {1-2|4|4-5|7|7-8|10|10-11} {'maxHeight': '130px'}
 const count = ref(0)
 const state = ref({ count: 0 })
 
@@ -395,6 +397,8 @@ console.log(count.value) // 1
 state.value.count = 1
 console.log(state.value) // { count: 1 }
 ```
+
+</v-clicks>
 
 ---
 
