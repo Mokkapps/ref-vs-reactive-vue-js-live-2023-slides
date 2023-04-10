@@ -2,8 +2,7 @@
 theme: mokkapps
 title: "ref() vs. reactive(): What to choose using Vue 3 Composition API?"
 lineNumbers: true
-colorSchema: "light"
-exportFilename: "ref-vs-reactive-vue-js-live-2023"
+exportFilename: "ref-vs-reactive-vue-js-live-2023-slides-by-michael-hoffmann"
 # provide a downloadable PDF:
 download: true
 transition: slide-left
@@ -27,7 +26,21 @@ layout: about-me
 -->
 
 ---
-layout: image-right
+layout: image
+image: ./ref-or-reactive.png
+---
+
+<!--
+- I love Vue 3's Composition API
+- but it provides two approaches to adding a reactive state to Vue components
+- ref and reactive
+- It can be cumbersome to use `.value` everywhere when using refs 
+- but you can also easily lose reactivity when destructuring reactive objects created with reactive.
+- I'll explain how you can choose whether to utilize reactive, ref, or both.
+-->
+
+---
+layout: section
 image: ./agenda.jpg
 ---
 
@@ -61,25 +74,35 @@ image: ./vue-reactivity-meme.jpg
   }
 </style>
 
-# Why does Vue need a reactivity system?
+# What is reactivity?
 
-<p></p>
+And why does Vue need it?
 
 <v-clicks>
 
-The state of a Vue component consists of **reactive JavaScript objects**. 
+- A reactivity system is a mechanism that automatically **keeps in sync** a data source (model) with a data representation (view) layer. 
 
-When you modify them, the view or dependent reactive objects are updated.
+- Every time the model changes, the view is re-rendered to reflect the changes.
+
+- It's a crucial mechanism for any web framework.
 
 </v-clicks>
+
+<!-- 
+- Reactivity describes the situation in which changes in the application state are automatically rendered in the DOM.
+- The state of a Vue component consists of reactive JavaScript objects. 
+- When you modify them, the view or dependent reactive objects are updated.
+ -->
 
 ---
 
 # JavaScript is not reactive per default
 
+<v-clicks>
+
 Let's take a look at a code example:
 
-```js {1-2|4|4,5|7|7,8}
+```js {1-2|1-4|1-5|1-7|1-8}
 let price = 10.0
 const quantity = 2
 
@@ -89,9 +112,6 @@ console.log(total) // 20
 price = 20.0
 console.log(total) // ⚠️ total is still 20
 ```
-
-<v-clicks>
-
 
 <span><twemoji-face-with-monocle /> In a reactivity system, we expect that `total` is updated each time `price` or `quantity` is changed.</span>
 
@@ -147,6 +167,40 @@ function ref(value) {
 ```
 </v-click>
 
+<!-- 
+- Code snippet is meant to explain the core concepts in the simplest form possible
+- so many details are omitted, and edge cases ignored. 
+- Inside track(), we check whether there is a currently running effect. If there is one, we lookup the subscriber effects (stored in a Set) for the property being tracked, and add the effect to the Set:
+- Effect subscriptions are stored in a global WeakMap<target, Map<key, Set<effect>>> data structure
+- Inside trigger(), we again lookup the subscriber effects for the property. But this time we invoke them instead:
+-->
+
+---
+disabled: true
+---
+
+# track & trigger
+
+```js
+// This will be set right before an effect is about
+// to be run. We'll deal with this later.
+let activeEffect
+
+function track(target, key) {
+  if (activeEffect) {
+    const effects = getSubscribersForProperty(target, key)
+    effects.add(activeEffect)
+  }
+}
+```
+
+```js
+function trigger(target, key) {
+  const effects = getSubscribersForProperty(target, key)
+  effects.forEach((effect) => effect())
+}
+```
+
 ---
 layout: section
 ---
@@ -157,11 +211,11 @@ layout: section
 
 # reactive()
 
-Returns a reactive proxy of the provided object.
+Returns a reactive proxy of the provided object
 
 <v-clicks>
 
-```js {1|3|all}
+```js {1|1-3}
 import { reactive } from 'vue'
 
 const state = reactive({ count: 0 })
@@ -169,7 +223,7 @@ const state = reactive({ count: 0 })
 
 This state is **deeply reactive by default**:
 
-```js {3,6|4|5|8|9|11,12,14|8,11-14} {maxHeight:'200px'}
+```js {3,6|4|5|8|8-9|11,12,14|8,11-14} {maxHeight:'200px'}
 import { reactive, watch } from 'vue'
 
 const state = reactive({
@@ -187,6 +241,10 @@ const incrementNestedCount = () => {
 
 ```
 </v-clicks>
+
+<!-- 
+- equivalent of Vue.observable() in Vue 2.6
+-->
 
 ---
 layout: section
@@ -215,7 +273,7 @@ The `reactive()` API has two limitations:
 
 <v-click>
 
-```js {1|2|4-5|all}
+```js {1|1-2|1-5}
 const plainJsObject = {}
 const proxy = reactive(plainJsObject)
 
@@ -269,6 +327,8 @@ const { count } = toRefs(state)
 
 Reactivity is lost if you try to reassign a reactive value:
 
+<v-clicks>
+
 ```js {1-3|5|5-6|8-10|11|12}
 let state = reactive({
   count: 0,
@@ -284,11 +344,15 @@ state = reactive({
 // ⚠️ The watcher doesn't fire
 ```
 
+</v-clicks>
+
 ---
 
 # Reactive Proxy vs. Original Problem #3
 
 Reactivity connection is also lost if you pass a property into a function:
+
+<v-clicks>
 
 ```js {1-3|9|5,7|5-7}
 const state = reactive({
@@ -301,6 +365,8 @@ const useFoo = (count) => {
 
 useFoo(state.count)
 ```
+
+</v-clicks>
 
 ---
 layout: section
