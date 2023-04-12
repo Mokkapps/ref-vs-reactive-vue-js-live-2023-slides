@@ -48,14 +48,9 @@ image: ./agenda.jpg
 
 - Reactivity in Vue 3
 - reactive()
-  - Limitations of reactive()
-  - My Opinion about reactive()
 - ref()
-  - Unwrapping refs
-  - My Opinion about ref()
-- Summary
-- Composing ref() and reactive()
-- Vue Community Opinions
+- reactive() vs. ref()
+- Conclusion
 
 ---
 layout: section
@@ -88,11 +83,13 @@ And why does Vue need it?
 
 </v-clicks>
 
-<!-- 
-- Reactivity describes the situation in which changes in the application state are automatically rendered in the DOM.
-- The state of a Vue component consists of reactive JavaScript objects. 
-- When you modify them, the view or dependent reactive objects are updated.
- -->
+<!--
+- A reactivity system is a mechanism that automatically **keeps in sync** a data source (model) with a data representation (view) layer. 
+
+- Every time the model changes, the view is re-rendered to reflect the changes.
+
+- It's a crucial mechanism for any web framework.
+-->
 
 ---
 
@@ -125,17 +122,11 @@ console.log(total) // ⚠️ total is still 20
 
 # How Vue implements reactivity
 
-It works by intercepting the reading and writing of object properties
-
 <v-clicks>
 
-**Vue 2** used object getters/setters exclusively due to browser limitations
+It works by intercepting the reading and writing of object properties
 
 **Vue 3** uses [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) for reactive objects and getters/setters for refs
-
-</v-clicks>
-
-<v-click>
 
 ```js {1|2|3-6|7-10|1-12|14-26} {maxHeight:'250px'}
 function reactive(obj) {
@@ -150,29 +141,22 @@ function reactive(obj) {
     },
   })
 }
-
-function ref(value) {
-  const refObject = {
-    get value() {
-      track(refObject, 'value')
-      return value
-    },
-    set value(newValue) {
-      value = newValue
-      trigger(refObject, 'value')
-    },
-  }
-  return refObject
-}
 ```
-</v-click>
 
-<!-- 
-- Code snippet is meant to explain the core concepts in the simplest form possible
-- so many details are omitted, and edge cases ignored. 
-- Inside track(), we check whether there is a currently running effect. If there is one, we lookup the subscriber effects (stored in a Set) for the property being tracked, and add the effect to the Set:
-- Effect subscriptions are stored in a global WeakMap<target, Map<key, Set<effect>>> data structure
-- Inside trigger(), we again lookup the subscriber effects for the property. But this time we invoke them instead:
+**Vue 2** used object getters/setters exclusively due to browser limitations
+
+</v-clicks>
+
+<!--
+- **Simplified code example** to explain the core concepts in the simplest form possible. Many details are omitted, and edge cases ignored. 
+
+- Inside **track()**, we check whether there is a **currently running effect**. 
+- effects are **stored in a WeakMap**
+- **side effect**, or effect for short, are functions that modify the application state.
+- Inside **trigger()**, we again lookup the subscriber effects for the property. But this time we **invoke them** instead
+
+
+- effects are **stored in a global WeakMap**<target, Map<key, Set<effect>>> data structure
 -->
 
 ---
@@ -283,58 +267,64 @@ console.log(proxy === plainJsObject) // false
 
 </v-click>
 
+<!--
+- object types like objects, arrays, and collection types such as Map and Set
+- primitive values such as string, number or boolean
+- strict equality (===) operator
+-->
+
 ---
 
-# Reactive Proxy vs. Original Problem #1
+# Problem 1: Reactive Proxy vs. Original 
 
-Reactivity is lost if you destructure a reactive object's property into a local variable:
+<v-clicks>
 
-<v-click>
+Reactivity is lost if you destructure a reactive object's property into a local variable
 
-```js {1-3|5-6|8|all}
+```js {1-3|5|5-6|8|all}
 const state = reactive({
   count: 0,
 })
 
-// ⚠️ count is now a local variable disconnected from state.count
 let { count } = state
+// ⚠️ count is now a local variable disconnected from state.count
 
 count += 1 // ⚠️ Does not affect original state
 ```
 
-</v-click>
+</v-clicks>
 
 <v-click>
 
 `toRefs` solves that problem:
 
-```js {3-5|1,7-8}
+```js {3-5|1,7|1,7-8}
 import { toRefs } from 'vue'
 
 let state = reactive({
   count: 0,
 })
 
-// count is a ref, maintaining reactivity
 const { count } = toRefs(state)
+// count is a ref, maintaining reactivity
 ```
 
 </v-click>
 
 ---
 
-# Reactive Proxy vs. Original Problem #2
-
-Reactivity is lost if you try to reassign a reactive value:
+# Problem 2: Reactive Proxy vs. Original 
 
 <v-clicks>
 
-```js {1-3|5|5-6|8-10|11|12}
+Reactivity is lost if you try to reassign a reactive value
+
+```js {1-3|5|5-6|8-10|1-3,8-11|5,8-12}
 let state = reactive({
   count: 0,
 })
 
-watch(state, () => console.log(state), { deep: true })
+watch(state, () => console.log(state))
 // "{ count: 0 }"
 
 state = reactive({
@@ -348,11 +338,11 @@ state = reactive({
 
 ---
 
-# Reactive Proxy vs. Original Problem #3
-
-Reactivity connection is also lost if you pass a property into a function:
+# Problem 3: Reactive Proxy vs. Original Problem
 
 <v-clicks>
+
+Reactivity connection is also lost if you pass a property into a function
 
 ```js {1-3|9|5,7|5-7}
 const state = reactive({
@@ -367,12 +357,6 @@ useFoo(state.count)
 ```
 
 </v-clicks>
-
----
-layout: section
----
-
-# My Opinion about reactive()
 
 ---
 
@@ -466,27 +450,51 @@ console.log(state.value) // { count: 1 }
 
 </v-clicks>
 
+<!--
+- refs can store primitive values but also complex data structures like objects, arrays, maps, and **even DOM elements**.
+- ref() takes an inner value and returns a reactive and mutable ref object. 
+- The ref object has a single property .value that points to the inner value. 
+- If you want to access or mutate the value you need to use.value
+-->
+
 ---
 
 # ref() internals
 
-How can ref() hold primitive values?
-
 <v-clicks>
 
-`ref()` is using `reactive()` under the hood:
+How can ref() hold primitive values?
 
-```js {1-3|1-5|1-6|1-7}
-const ref = reactive({
-  value: 0,
-})
+```js {1,13|2,11,12|3-6|7-10|all}
+function ref(value) {
+  const refObject = {
+    get value() {
+      track(refObject, 'value')
+      return value
+    },
+    set value(newValue) {
+      value = newValue
+      trigger(refObject, 'value')
+    }
+  }
+  return refObject
+}
+```
 
-ref.value // 0
-ref.value += 1
-ref.value // 1
+For object types, `ref()` is using `reactive()` under the hood:
+
+```js {1}
+ref({}) ~= ref(reactive({}))
 ```
 
   </v-clicks>
+
+<!--
+- we learned that Vue's reactivity system works by **intercepting object properties**
+
+- when holding object types, ref automatically converts its .value with reactive().
+- for primitive values it uses its own logic
+-->
 
 ---
 
@@ -496,15 +504,15 @@ ref.value // 1
 
 <v-clicks>
 
-Reactivity is lost if you destructure a reactive object created with `ref()`:
+Reactivity is lost if you destructure a reactive object created with `ref()`
 
 ```js {1,3|1-5|1-6}
 import { ref } from 'vue'
 
 const count = ref(0)
 
-const countValue = count.value // ⚠️ disconnects reactivity
-const { value: countDestructured } = count // ⚠️ disconnects reactivity
+const { value: countDestructured } = count // ⚠️ disconnects reactivity, countDestructured is a plain number
+const countValue = count.value // ⚠️ disconnects reactivity, countValue is a plain number
 ```
 
 But reactivity is not lost if refs are grouped in a plain JavaScript object:
@@ -528,21 +536,17 @@ const { count, name } = state // count & name are still reactive
 
 <v-clicks>
 
-Refs can be passed into functions without losing reactivity:
+Refs can be passed into functions without losing reactivity
 
-```js {1-4|1-4,14|6-12}
+```js {1-4|1-4,10|6,8|6-8}
 const state = {
   count: ref(1),
   name: ref('Michael'),
 }
 
 const useFoo = (count) => {
-  /**
-   * The function receives a ref
-   * It needs to access the value via .value but it
-   * will retain the reactivity connection
-   */
-  }
+  // count is a ref and fully reactive
+}
 
 useFoo(state.count)
 ```
@@ -558,7 +562,7 @@ This capability is quite important as it is frequently used when extracting logi
 
 <v-clicks>
 
-A `ref` containing an object value can reactively replace the entire object:
+A `ref` containing an object value can reactively replace the entire object
 
 ```js {1-4|6-9|10}
 const state = ref({
@@ -571,33 +575,6 @@ state.value = {
   name: 'Chris',
 }
 // state is still reactive
-```
-
-</v-clicks>
-
----
-layout: section
----
-
-## My Opinion about ref()
-
----
-
-# My Opinion
-
-<p/>
-
-<v-clicks>
-
-
-What I like most about `ref` is that you know that it's a reactive value if you see that its property is accessed via `.value`. 
-
-It's not that clear if you use an object that is created with `reactive`:
-
-```js {1|3}
-anyObject.property = 'new' // anyObject could be a plain JS object or a reactive object
-
-anyRef.value = 'new' // likely a ref
 ```
 
 </v-clicks>
@@ -706,7 +683,7 @@ The corresponding JSON setting:
 layout: section
 ---
 
-# Summary
+# reactive() vs. ref()
 
 ---
 
@@ -722,11 +699,41 @@ layout: section
 | 👎 destructured values are not reactive                             |                                                                        |
 | 👍 Similar to Vue 2’s data object                                   |                                                                        |
 
+<!--
+- ref() can be used with any value
+- ref() values are accessed differently in script and template 
+- ref() object references can be re-assigned
+- ref() properties need to be accessed with .value in script
+- ref() references can be passed across functions
+- ref() can be destructured if grouped in a plain JS object
+-reactive() is better for Composition API migration
+-->
+
 ---
 layout: section
 ---
 
-# Composing ref() and reactive()
+# Conclusion
+
+---
+
+# My Opinion
+
+<p/>
+
+<v-clicks>
+
+What I like most about `ref` is that you know that it's a reactive value if you see that its property is accessed via `.value`. 
+
+It's not that clear if you use an object that is created with `reactive`:
+
+```js {1|3}
+anyObject.property = 'new' // anyObject could be a plain JS object or a reactive object
+
+anyRef.value = 'new' // likely a ref
+```
+
+</v-clicks>
 
 ---
 
@@ -762,17 +769,31 @@ setTimeout(() => {
 
 </v-clicks>
 
-<!-- If you don't need the reactivity of the `state` object itself you could instead group the refs in a plain JavaScript object.
+<!--
+If you don't need the reactivity of the "state" object itself group the refs in a plain JS object
 
-Grouping refs results in a single object that is easier to handle and keeps your code organized. At a glance, you can see that the grouped refs belong together and are related.
+**Grouping refs results in a single object**
+- easier to handle
+- keeps your code organized
+- At a glance, you can see that the grouped refs belong together and are related.
 
-This pattern is also used in libraries like [Vuelidate](https://vuelidate.js.org/) where they [use reactive() for setting up state for validations](https://blog.logrocket.com/form-validation-in-vue-with-vuelidate/). -->
+This pattern is also used in libraries like Vuelidate where they use reactive() for setting up state for validations
+-->
 
 ---
 layout: section
 ---
 
 # Opinions from Vue Community
+
+---
+layout: image-right
+image: ./ref.jpeg
+---
+
+# Twitter Poll
+
+<Tweet id="1645744629193617416" />
 
 ---
 layout: image-right
@@ -789,20 +810,14 @@ The amazing [Michael Thiessen](https://twitter.com/MichaelThiessen) wrote a [bri
 
 </v-click>
 
-<v-click>
-
-Some names:
-
-</v-click>
-
-<v-click>
+<v-clicks>
 
 - Eduardo, creator of Pinia
 - Daniel Roe, leader of the Nuxt team
 - Matt from LearnVue
 - and more...
 
-</v-click>
+</v-clicks>
 
 <v-click>
 
