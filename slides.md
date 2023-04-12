@@ -52,6 +52,14 @@ image: ./agenda.jpg
 - reactive() vs. ref()
 - Conclusion
 
+<!--
+Conclusion: 
+
+- My Opinion
+- Opinions from the Vue community
+- pattern to group ref and reactive
+-->
+
 ---
 layout: section
 ---
@@ -128,7 +136,7 @@ It works by intercepting the reading and writing of object properties
 
 **Vue 3** uses [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) for reactive objects and getters/setters for refs
 
-```js {1|2|3-6|7-10|1-12|14-26} {maxHeight:'250px'}
+```js {1|2|3-6|7-10|1-12} {maxHeight:'250px'}
 function reactive(obj) {
   return new Proxy(obj, {
     get(target, key) {
@@ -143,7 +151,7 @@ function reactive(obj) {
 }
 ```
 
-**Vue 2** used object getters/setters exclusively due to browser limitations
+<span><twemoji-information /> Vue 2 used object getters/setters exclusively due to browser limitations</span>
 
 </v-clicks>
 
@@ -395,7 +403,7 @@ setup() {
     count: 0,
     name: 'MyCounter'
   });
-  const {count, name} = toRefs(statee)
+  const {count, name} = toRefs(state)
 
   // Equivalent to "methods" in Options API
   increment(username) {
@@ -492,8 +500,9 @@ ref({}) ~= ref(reactive({}))
 <!--
 - we learned that Vue's reactivity system works by **intercepting object properties**
 
+- for primitive values it uses its own logic, simplified code for demonstration purpose
+
 - when holding object types, ref automatically converts its .value with reactive().
-- for primitive values it uses its own logic
 -->
 
 ---
@@ -666,16 +675,13 @@ watch(count, (newCount) => console.log(newCount))
 
 <v-clicks>
 
-
 [Volar VS Code extension](https://marketplace.visualstudio.com/items?itemName=Vue.volar) can automatically add `.value` to `refs`:
 
-<img src="/volar-setting.png" style="height: 200px"/>
+<div class="grid grid-cols-2 gap-12">
+  <img src="/volar-auto-complete-ref.gif"/>
+  <img src="/volar-setting.png"/>
+</div>
 
-The corresponding JSON setting:
-
-```json
-"volar.autoCompleteRefs": true
-```
 
 </v-clicks>
 
