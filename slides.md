@@ -71,11 +71,11 @@ layout: image-right
 image: ./vue-reactivity-meme.jpg
 ---
 
-<style>
+<!-- <style>
   div {
     @apply !bg-contain;
   }
-</style>
+</style> -->
 
 # What is reactivity?
 
