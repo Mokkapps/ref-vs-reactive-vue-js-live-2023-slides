@@ -73,7 +73,7 @@ image: ./vue-reactivity-meme.jpg
 
 <style>
   div.w-full.w-full {
-    background-size: contain !important;
+    @apply !bg-contain;
   }
 </style>
 
