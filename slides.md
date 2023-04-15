@@ -73,7 +73,7 @@ image: ./vue-reactivity-meme.jpg
 
 <style>
   div {
-    @apply !bg-contain;
+    @apply bg-contain;
   }
 </style>
 
