@@ -861,4 +861,4 @@ layout: outro
 
 Questions?
 
-[Repository](https://github.com/Mokkapps/vuejs-athen-meetup-2023-lightning-talk-polite-popup-nuxt-3-slides) / [Slides](https://vuejs-athen-meetup-2023-popup-talk.netlify.app/)
+[Repository](https://github.com/Mokkapps/ref-vs-reactive-vue-js-live-2023-slides) / [Slides](https://ref-vs-reactive-vuejs-live-2023.netlify.app/)
