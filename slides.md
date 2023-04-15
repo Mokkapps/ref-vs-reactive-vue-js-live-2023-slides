@@ -1,7 +1,7 @@
 ---
 theme: mokkapps
 title: "ref() vs. reactive(): What to choose using Vue 3 Composition API?"
-lineNumbers: true
+# lineNumbers: true
 exportFilename: "ref-vs-reactive-vue-js-live-2023-slides-by-michael-hoffmann"
 # provide a downloadable PDF:
 download: true
@@ -30,13 +30,14 @@ layout: image
 image: ./ref-or-reactive.png
 ---
 
+
+
 <!--
 - I love Vue 3's Composition API
-- but it provides two approaches to adding a reactive state to Vue components
-- ref and reactive
-- It can be cumbersome to use `.value` everywhere when using refs 
-- but you can also easily lose reactivity when destructuring reactive objects created with reactive.
-- I'll explain how you can choose whether to utilize reactive, ref, or both.
+-  two approaches to adding a reactive state to Vue components
+- cumbersome to use `.value` everywhere when using refs 
+- easily lose reactivity when destructuring reactive objects
+- how you can choose whether to utilize reactive, ref, or both.
 -->
 
 ---
@@ -55,9 +56,8 @@ image: ./agenda.jpg
 <!--
 Conclusion: 
 
-- My Opinion
-- Opinions from the Vue community
-- pattern to group ref and reactive
+- My pinion & opinions from the Vue community
+- A pattern to group ref and reactive
 -->
 
 ---
@@ -92,9 +92,9 @@ And why does Vue need it?
 </v-clicks>
 
 <!--
-- A reactivity system is a mechanism that automatically **keeps in sync** a data source (model) with a data representation (view) layer. 
+- mechanism that automatically **keeps in sync** a data source (model) with a data representation (view) layer. 
 
-- Every time the model changes, the view is re-rendered to reflect the changes.
+- model changes, the view is re-rendered to reflect the changes.
 
 - It's a crucial mechanism for any web framework.
 -->
@@ -136,7 +136,7 @@ It works by intercepting the reading and writing of object properties
 
 **Vue 3** uses [Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) for reactive objects and getters/setters for refs
 
-```js {1|2|3-6|7-10|1-12} {maxHeight:'250px'}
+```js {1|2,11|3-6|7-10|1-12} {maxHeight:'250px'}
 function reactive(obj) {
   return new Proxy(obj, {
     get(target, key) {
@@ -156,14 +156,10 @@ function reactive(obj) {
 </v-clicks>
 
 <!--
-- **Simplified code example** to explain the core concepts in the simplest form possible. Many details are omitted, and edge cases ignored. 
-
-- Inside **track()**, we check whether there is a **currently running effect**. 
-- effects are **stored in a WeakMap**
-- **side effect**, or effect for short, are functions that modify the application state.
-- Inside **trigger()**, we again lookup the subscriber effects for the property. But this time we **invoke them** instead
-
-
+- **Simplified code example**
+- target: map storing effects (side effects), functions that modify application state
+- **track()**, we check whether there is a **currently running effect**. 
+- **trigger()**, lookup the subscriber effects for the property and **invoke them**
 - effects are **stored in a global WeakMap**<target, Map<key, Set<effect>>> data structure
 -->
 
@@ -442,18 +438,14 @@ const state = ref({ count: 0 })
 
 To read & write the reactive variable created with `ref()`, you need to access it with the `.value` property:
 
-```js {1-2|4|4-5|7|7-8|10|10-11} {'maxHeight': '130px'}
+```js {1|1,3|1,4|1,6|1,7} {'maxHeight': '130px'}
 const count = ref(0)
-const state = ref({ count: 0 })
 
 console.log(count) // { value: 0 }
 console.log(count.value) // 0
 
-count.value++
-console.log(count.value) // 1
-
-state.value.count = 1
-console.log(state.value) // { count: 1 }
+count.value = 2
+console.log(count.value) // 2
 ```
 
 </v-clicks>
@@ -598,28 +590,6 @@ Vue helps us unwrapping refs without calling `.value` everywhere
 
 ---
 
-# Unwrapping refs with unref()
-
-<p/>
-
-<v-clicks>
-
-[unref()](https://vuejs.org/api/reactivity-utilities.html#unref) is a handy utility function that is especially useful if your value **could be** a `ref`:
-
-```js {3|1,5}
-import { ref, unref } from 'vue'
-
-const count = ref(0)
-
-const unwrappedCount = unref(count)
-```
-
-`unref()` is a sugar function for `isRef(count) ? count.value : count`
-
-</v-clicks>
-
----
-
 # Template Unwrapping
 
 <p/>
@@ -661,9 +631,35 @@ import { watch, ref } from 'vue'
 
 const count = ref(0)
 
-// Vue automatically unwraps this ref for us
-watch(count, (newCount) => console.log(newCount))
+watch(count, (newCount) => console.log(newCount)) // no .value needed
 ```
+
+</v-clicks>
+
+---
+
+# Unwrapping refs with unref()
+
+<p/>
+
+<v-clicks>
+
+[unref()](https://vuejs.org/api/reactivity-utilities.html#unref) is a handy utility function that is especially useful if your value **could be** a `ref`:
+
+```js {3-4|1,3,6|1,3,6,7|1,4,9|1,4,9,10}
+import { ref, unref } from 'vue'
+
+const count = ref(0)
+const name = 'Michael'
+
+const unwrappedCount = unref(count)
+console.log(unwrappedCount) // 0
+
+const unwrappedName = unref(name)
+console.log(name) // 'Michael'
+```
+
+`unref()` is a sugar function for `isRef(count) ? count.value : count`
 
 </v-clicks>
 
@@ -706,13 +702,12 @@ layout: section
 | 👍 Similar to Vue 2’s data object                                   |                                                                        |
 
 <!--
-- ref() can be used with any value
-- ref() values are accessed differently in script and template 
+- ref() scores as it can be used with any value
+- ref() values are accessed differently in script and template, plus point for reactive()
 - ref() object references can be re-assigned
-- ref() properties need to be accessed with .value in script
 - ref() references can be passed across functions
 - ref() can be destructured if grouped in a plain JS object
--reactive() is better for Composition API migration
+- reactive() is better for Composition API migration
 -->
 
 ---
